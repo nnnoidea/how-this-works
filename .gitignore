@@ -1,0 +1,16 @@
+research/
+studies/
+how-this-works-site/
+deploy/
+.semantic-alignment/
+.agents/
+.codex/
+.DS_Store
+.env
+.env.*
+*.pem
+*.key
+__pycache__/
+*.pyc
+node_modules/
+.cache/

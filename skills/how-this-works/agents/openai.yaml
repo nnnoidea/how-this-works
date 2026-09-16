@@ -1,0 +1,4 @@
+interface:
+  display_name: "How This Works"
+  short_description: "从使用场景到内部协作，看懂项目如何运作，追溯设计演化"
+  default_prompt: "使用 $how-this-works 先构建一个项目的当前材料和理解结构，从真实材料发现单元与关系，连接具体证据并按需深读。只有任务要求演化研究时再进入历史或跨项目流程，区分作者主张、事实、推断和运行验证。"

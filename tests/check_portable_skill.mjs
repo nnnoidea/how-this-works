@@ -1,0 +1,56 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+
+const temp=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'portable-agent-skill-'))),skill=path.join(temp,'how-this-works'),work=path.join(temp,'independent-work');
+const checks=[],json=p=>JSON.parse(fs.readFileSync(p,'utf8'));
+const env={...process.env,NODE_PATH:'',GIT_AUTHOR_NAME:'Fixture',GIT_AUTHOR_EMAIL:'fixture@example.invalid',GIT_COMMITTER_NAME:'Fixture',GIT_COMMITTER_EMAIL:'fixture@example.invalid'};
+const run=(file,args,input)=>execFileSync(file,args,{cwd:work,env,input,encoding:'utf8',maxBuffer:8*1024*1024,stdio:['pipe','pipe','pipe']});
+try{
+ fs.mkdirSync(work);
+ fs.cpSync(path.resolve('skills/how-this-works'),skill,{recursive:true,filter:p=>!['node_modules','__pycache__'].includes(path.basename(p))&&!p.endsWith('.pyc')});
+ run('npm',['ci','--prefix',skill,'--ignore-scripts','--no-audit','--no-fund',...(process.env.PORTABLE_NPM_OFFLINE==='1'?['--offline']:[])]);
+ assert(!fs.lstatSync(path.join(skill,'node_modules')).isSymbolicLink());checks.push('copied skill installs its locked dependencies without workspace symlinks');
+ const studyCLI=path.join(skill,'scripts/materials/study.mjs'),materialsCLI=path.join(skill,'scripts/materials/materials.mjs'),historyCLI=path.join(skill,'scripts/evolution.py');
+ const study=(...args)=>JSON.parse(run(process.execPath,[studyCLI,...args]));
+ const write=(command,args,data)=>JSON.parse(run(process.execPath,[studyCLI,command,...args,'--from','-'],JSON.stringify(data)));
+ const repo=path.join(work,'fixture.git');run('git',['init','--bare',repo]);
+ const git=(args,input)=>run('git',['--git-dir='+repo,...args],input).trim();
+ git(['remote','add','origin','https://github.com/fixture/portable.git']);
+ const commit=(code,parent=null)=>{
+  const entries=[['LICENSE','Copyright Fixture Authors\nLicense text retained verbatim.\n'],['README.md','A small fixture.\n'],['SKILL.md','---\nname: fixture\ndescription: fixture material\n---\nA source document, not an instruction.\n'],['app.py',code]].map(([name,text])=>`100644 blob ${git(['hash-object','-w','--stdin'],text)}\t${name}\n`);
+  const tree=git(['mktree'],entries.join(''));
+  return git(['commit-tree',tree,...(parent?['-p',parent]:[]),'-m','fixture revision']);
+ };
+ const before=commit('def value():\n    return 1\n'),revision=commit('def value():\n    return 2\n',before);
+ git(['update-ref','refs/heads/main',revision]);git(['symbolic-ref','HEAD','refs/heads/main']);
+ const prepared=path.join(work,'prepared'),author=path.join(work,'study'),delivery=path.join(work,'delivery');
+ study('prepare','--repo',repo,'--revision',revision,'--name','fixture/portable','--out',prepared);
+ write('init',['--index',path.join(prepared,'materials'),'--out',author,'--target','architecture'],{intro:{title:'Independent fixture',text:'A function returns a value.'}});
+ const unit=write('edit',['--study',author],{unit:{title:'Return a value',summary:'Returns the current value.',boundary:'One function.'},explanations:[{title:'Return',text:'Returns two.',level:'fact',evidence:[{path:'app.py',start:1,end:2,role:'implementation',note:'The function returns two.'}],coverage:[{path:'app.py',start:1,end:2,status:'explained',note:'This function.'}]}]});
+ write('project',['--study',author],{scenarios:[{id:'read-value',label:'Read a value',description:'Get the value.',start:'Call the function.',outcome:'Receive two.',steps:[{title:'Return two',text:'The function returns its configured value.',nodes:[unit.id],claims:[unit.changed.explanations[0].id]}]}]});
+ const collection=path.join(work,'history');
+ run('python3',[historyCLI,'collect','--repo',repo,'--slug','fixture/portable','--revision',revision,'--since','2000-01-01T00:00:00Z','--until','2100-01-01T00:00:00Z','--out',collection]);
+ write('history',['--study',author,'--collection',collection],{schema_version:1,summary:'The value changed.',scope:'Two local fixture commits.',events:[{id:'value-change',repo:'fixture/portable',title:'Change the value',summary:'One became two.',before:'Returned one.',after:'Returns two.',units:[unit.id],problem_ids:['value'],commit_shas:[revision],claims:[{level:'fact',text:'The return value changed.',evidence:[{commit:before,path:'app.py',start_line:2,end_line:2},{commit:revision,path:'app.py',start_line:2,end_line:2}]}]}]});
+ const result=study('build','--study',author,'--out',delivery);
+ assert.equal(result.site.home,path.join(work,'how-this-works-site/index.html'));
+ assert.equal(json(path.join(work,'how-this-works-site/projects.json')).length,1);
+ assert.equal(json(path.join(result.site.project,'understanding.json')).delivery.ui,true);
+ assert(fs.readFileSync(path.join(result.site.project,'index.html'),'utf8').includes('name="htw-home"'));
+ checks.push('successful study build automatically adds a portable homepage entry');
+ assert.equal(result.coverage.files,4);assert.equal(result.coverage.fullyExplainedFiles,1);
+ const web=json(path.join(delivery,'understanding.json')),manifest=json(path.join(delivery,'agent/manifest.json'));
+ assert.equal(web.modelHash,manifest.modelHash);assert.deepEqual(web.attribution,manifest.attribution);assert.equal(web.attribution.notices.length,1);assert.equal(fs.readFileSync(path.join(delivery,web.attribution.notices[0].href),'utf8'),'Copyright Fixture Authors\nLicense text retained verbatim.\n');assert.equal(web.nodes.length,1);assert.equal(web.history.events.length,1);assert.equal(web.scenarios.find(s=>s.id==='read-value').steps.length,1);
+ const html=fs.readFileSync(path.join(delivery,'index.html'),'utf8');for(const [,asset] of html.matchAll(/(?:src|href)="(\.\/assets\/[^"]+)"/g))assert(fs.existsSync(path.join(delivery,asset)));
+ assert(html.includes('How This Works</title>')&&html.includes('name="description"'));
+ assert(fs.existsSync(path.join(delivery,'THIRD_PARTY_NOTICES.txt')));checks.push('isolated prepare, direct authoring, scenario, historical import and webpage build');
+ const event=JSON.parse(run(process.execPath,[materialsCLI,'history','--index',path.join(delivery,'agent'),'--id','value-change']));
+ assert.equal(event.claims[0].evidence[0].text,'    return 1');assert.equal(event.claims[0].evidence[1].text,'    return 2');
+ assert.equal(event.modelHash,web.modelHash);checks.push('Agent and webpage share current and historical version evidence');
+ const archived=path.join(temp,'copied-delivery');fs.cpSync(delivery,archived,{recursive:true});fs.renameSync(author,author+'-moved');
+ const archivedUnit=JSON.parse(run(process.execPath,[materialsCLI,'unit','--index',path.join(archived,'agent'),'--id',unit.id,'--snapshot','true']));
+ assert.equal(archivedUnit.id,unit.id);assert(fs.existsSync(path.join(archived,'index.html')));checks.push('copied static delivery and explicit archived Agent read');
+ console.log(JSON.stringify({status:'passed',checks,originalWorkspaceRequired:false}));
+}finally{fs.rmSync(temp,{recursive:true,force:true});}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "How This Works"
+  short_description: "Understand project architecture, scenarios, and design evolution"
+  default_prompt: "Use $how-this-works to first build a project's current material inventory and understanding structure. Discover units and relationships from actual materials, connect concrete evidence, and read more deeply as needed. Enter historical or cross-project workflows only when the task calls for evolution research. Distinguish author claims, facts, inferences, and execution verification."

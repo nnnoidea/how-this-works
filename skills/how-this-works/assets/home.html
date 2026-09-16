@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+ <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+ <title data-ui>How This Works · 项目学习库</title><link rel="icon" href="data:,">
+ <meta name="description" content="从使用场景到内部协作，看懂一个项目如何运作。浏览项目解读、理解架构，并追溯设计演化。">
+ <style>
+  *{box-sizing:border-box}body{margin:0;background:#f5f7f2;color:#243e34;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",system-ui,sans-serif}a{color:inherit;text-decoration:none}a:hover{color:#267151}a:focus-visible,input:focus-visible{outline:3px solid #539774;outline-offset:5px}header{border-bottom:1px solid #dce4d8;background:#ffffffa8}header>div,main,footer{max-width:1200px;margin:auto;padding-left:36px;padding-right:36px}.brand-row{display:flex;align-items:center;justify-content:space-between;height:82px;gap:20px}.brand{display:flex;align-items:center;gap:12px;font-size:21px;letter-spacing:-.7px;font-weight:750}.mark{background:#306753;color:white;padding:4px 10px;border-radius:12px;font-size:28px;font-weight:500}.header-note{color:#708174;font-size:13px}.hero{padding:64px 0 48px;max-width:820px}.eyebrow{font:12px/1.6 ui-monospace,monospace;letter-spacing:2px;color:#587965}.hero h1{font-size:clamp(32px,4.5vw,52px);letter-spacing:-2px;line-height:1.3;margin:18px 0 22px;font-weight:650}.hero p{font-size:17px;line-height:1.9;color:#647869;max-width:640px;margin:0}.journey{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:25px;color:#44664e;font-size:13px}.journey i{font-style:normal;color:#9caf9b}.library-bar{display:flex;justify-content:space-between;align-items:center;gap:24px;border-top:1px solid #d8e2d3;padding:24px 0}.library-bar h2{font-size:19px;margin:0}.library-bar small{font-size:13px;font-weight:400;color:#73826b;margin-left:10px}.search{display:flex;align-items:center;gap:12px;color:#627861;font-size:13px}.search input{width:270px;max-width:100%;border:1px solid #d5dfcf;background:white;border-radius:9px;padding:12px 14px;font:inherit;color:#294235}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}.project{background:#fff;border:1px solid #dce5d6;border-radius:16px;padding:28px 30px;display:flex;flex-direction:column;min-width:0;transition:border-color .15s,box-shadow .15s}.project:hover{border-color:#99b39a;box-shadow:0 7px 25px #294e3310}.card-top{display:flex;align-items:center;justify-content:space-between;gap:14px}.repo{font:12px/1.7 ui-monospace,monospace;color:#708572;overflow-wrap:anywhere}.tag{white-space:nowrap;font-size:11px;background:#edf2e7;color:#617a51;padding:4px 9px;border-radius:5px}.project h2{font-size:25px;letter-spacing:-.6px;margin:20px 0 12px}.project h2 a{display:flex;justify-content:space-between;gap:18px}.project h2 span{font-size:21px;font-weight:400;color:#8b9f82}.project h3{font-size:15px;line-height:1.7;margin:0 0 9px;font-weight:600}.description{font-size:14px;line-height:1.9;color:#6a7c6c;margin:0 0 22px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}.scenarios{display:grid;gap:7px;margin:auto 0 22px}.scenarios a{display:flex;justify-content:space-between;gap:15px;font-size:13px;line-height:1.7;background:#f5f7f1;padding:8px 11px;border-radius:6px}.scenarios span{color:#78956d}.card-bottom{display:flex;justify-content:space-between;align-items:center;gap:15px;padding-top:18px;border-top:1px solid #e4eadd;font-size:12px;color:#718266}.card-bottom a{font-size:13px;font-weight:600;color:#336949;white-space:nowrap}.version{font:10px/1.6 ui-monospace,monospace;color:#8b9982;margin-top:12px}footer{padding-top:38px;padding-bottom:30px;display:flex;justify-content:space-between;gap:25px;font-size:12px;line-height:1.9;color:#7f8d75}[hidden]{display:none!important}#empty{padding:50px 0;color:#718266}
+  .ui-language{flex-shrink:0;border:1px solid #cddcc7;border-radius:6px;background:white;color:#316c59;padding:6px 10px;cursor:pointer;font:12px/1.5 system-ui}.ui-language:focus-visible{outline:2px solid #548267;outline-offset:2px}
+  @media(max-width:680px){header>div,main,footer{padding-left:20px;padding-right:20px}.brand-row{height:70px}.brand{font-size:18px}.header-note{display:none}.hero{padding:40px 0 32px}.hero h1{letter-spacing:-1px}.hero p{font-size:15px}.library-bar{align-items:stretch;flex-direction:column;gap:18px}.search{display:block}.search input{width:100%;margin-top:8px}.grid{grid-template-columns:1fr;gap:18px}.project{padding:24px}.project h2{font-size:22px}footer{flex-direction:column;gap:8px}}
+ </style>
+</head>
+<body>
+ <header><div class="brand-row"><a class="brand" href="./"><span class="mark" aria-hidden="true">⌘</span>How This Works</a><span class="header-note"><span data-ui>从使用场景到内部协作</span></span><button class="ui-language" data-ui-language>English</button></div></header>
+ <main>
+  <section class="hero"><div class="eyebrow"><span data-ui>HOW THIS WORKS / 项目学习库</span></div><h1><span data-ui>看懂一个项目，</span><br><span data-ui>从这里开始。</span></h1><p><span data-ui>它能做什么，各部分怎样配合，又为什么形成现在的设计？</span><br><span data-ui>从一件具体的事出发，沿着解释走进真实实现。</span></p><div class="journey"><span><span data-ui>认识用途</span></span><i>→</i><span><span data-ui>跟随场景</span></span><i>→</i><span><span data-ui>理解架构</span></span><i>→</i><span><span data-ui>回看演化</span></span></div></section>
+  <section aria-labelledby="library-title"><div class="library-bar"><h2 id="library-title"><span data-ui>项目解读 </span><small><span id="count" aria-live="polite">{{COUNT}}</span><span data-ui> 个项目</span></small></h2><label class="search"><span data-ui>寻找项目</span><input data-ui-placeholder id="search" type="search" placeholder="项目名称、用途或场景" autocomplete="off"></label></div><div class="grid"><!-- PROJECTS --></div><p id="empty" hidden><span data-ui>没有找到匹配项目，试试其他名称或关键词。</span></p></section>
+ </main>
+ <footer><span><span data-ui>How This Works · 独立项目解读</span><br><span data-ui>每个项目保留原文依据与研究边界，解读不代表上游官方背书。</span></span><span><span data-ui>从兴趣出发，带着理解继续探索。</span></span></footer>
+ <script type="module">
+  // UI_LANGUAGE
+  const cards=[...document.querySelectorAll('[data-project]')];
+  const languageButton=document.querySelector('[data-ui-language]');
+  languageButton.addEventListener('click',toggleLanguage);
+  const description=document.querySelector('meta[name="description"]'),descriptionKey=description.content;
+  t.subscribe(translate=>{
+   for(const element of document.querySelectorAll('[data-ui]')){
+    element.dataset.ui ||= element.textContent;
+    element.textContent=translate(element.dataset.ui);
+   }
+   for(const input of document.querySelectorAll('[data-ui-placeholder]')){
+    input.dataset.uiPlaceholder ||= input.placeholder;
+    input.placeholder=translate(input.dataset.uiPlaceholder);
+   }
+   languageButton.textContent=translate.language==='zh'?'English':'中文';
+   languageButton.setAttribute('aria-label',translate('界面语言'));
+   languageButton.title=translate('只切换固定界面文案，项目解释与原文保持不变');
+   description.content=translate(descriptionKey);
+   for(const time of document.querySelectorAll('time[datetime]'))time.textContent=new Date(time.dateTime).toLocaleDateString(translate.language==='en'?'en-GB':'zh-CN');
+  });
+  document.querySelector('#search').addEventListener('input',event=>{const query=event.target.value.trim().toLowerCase();let count=0;for(const card of cards){card.hidden=!card.dataset.search.includes(query);if(!card.hidden)count++;}document.querySelector('#count').textContent=count;document.querySelector('#empty').hidden=count!==0;});
+ </script>
+</body>
+</html>
