@@ -74,7 +74,11 @@ export function declarations(ts,p,text){
   visit(sf,'');
   return {anchors:out,diagnostics:sf.parseDiagnostics.map(d=>({line:sf.getLineAndCharacterOfPosition(d.start??0).line+1,message:ts.flattenDiagnosticMessageText(d.messageText,' ')}))};
 }
+export function validateIntroExample(intro){
+  assert(intro?.example===undefined||typeof intro.example==='string','intro.example must be a string; include illustrative/tested wording in the text, not a {kind,text} object');
+}
 export function validateModel(model,files,revision,options={}){
+  validateIntroExample(model.intro);
   assert(!model.concepts&&!model.questions&&!model.events,'legacy study model: current model requires nodes/sections/edges; import researched events through study history');
   assert(Array.isArray(model.nodes)&&Array.isArray(model.edges)&&model.evidence&&typeof model.evidence==='object','current model requires nodes, edges and evidence');
   assert(model.revision===revision,'understanding/material revision mismatch');

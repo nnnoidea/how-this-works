@@ -1,115 +1,123 @@
-# 当前项目命令
+# Current project commands
 
-需要Python >=3.9、Git和Node >=22.18。整个 `how-this-works` 目录即为可复制安装的 skill；`skill_dir` 指向安装后的实际目录。首次安装 skill 自身的锁定依赖：`npm ci --prefix "$skill_dir" --ignore-scripts --no-audit --no-fund`。不安装或执行被研究项目。
+Requires Python >=3.9, Git, and Node >=22.18. The entire `how-this-works` directory is a portable, installable skill; `skill_dir` points to its actual installed location. Install the skill's own locked dependencies once: `npm ci --prefix "$skill_dir" --ignore-scripts --no-audit --no-fund`. Do not install or execute the project under study.
 
-## 准备材料
+## Prepare materials
 
-输入专用裸仓库、版本及owner/repo名称，一条命令生成材料清单、原文、索引和准备报告：
+Given a dedicated bare repository, revision, and `owner/repo` name, one command generates the material inventory, original files, index, and preparation report:
 
 ```sh
 node "$skill_dir/scripts/materials/study.mjs" prepare \
   --repo "$repo_dir" --revision "$revision" --name "$repo_name" --out "$prepared_dir"
 ```
 
-输出路径和计时见终端JSON及preparation.json；相同输入可重跑，失败原因会保存。不同快照使用新目录。准备不需要研究模型，不生成基础材料图。
+The terminal JSON and `preparation.json` report output paths and timings. The same inputs can be rerun; failure reasons are saved. Use a new directory for a different snapshot. Preparation does not require a research model and does not generate a source-material graph.
 
-## 找材料与读原文
+## Find materials and read originals
 
-以下命令通过materials.mjs调用，均追加--index索引目录。完整参数及读取预算见`node "$skill_dir/scripts/materials/materials.mjs" --help`。
+Call the following commands through `materials.mjs`, appending `--index` with the index directory. For all arguments and reading budgets, see `node "$skill_dir/scripts/materials/materials.mjs" --help`.
 
-| 命令 | 用途 |
+| Command | Purpose |
 | --- | --- |
-| overview | 项目介绍（如有）、材料概况、解析覆盖及限制 |
-| find --term / --path | 精确词项或路径匹配；没有问题理解或相关性排名 |
-| file --path | 声明/章节定位；--part可看导入、引用或解释归属 |
-| read --path | 直接读文件或锚点，有界分页，返回正文与下一页范围 |
-| read --requests - --paged true | 从标准输入接收多范围对象，合并重复范围后分页 |
-| scenario --id | 场景的起点、过程、结果及关联解释；overview只列简要入口 |
-| unit --id | 已交付的单元、研究状态、关联与证据 |
-| history [--unit ID / --id EVENT_ID] | 已整理的演化概览、某职责的事件，或一个事件的解释及历史原文；缺少研究时明确报错 |
-| coverage | 已交付结构的归属和解释缺口 |
-| check | 材料身份和记录合法性；不检查语义真值 |
-| review | 可选的记录缺口提示；不是抽查或正确性认证 |
-| impact --against | 新旧材料变化可能影响的解释 |
+| overview | Project introduction, if available, material overview, parsing coverage, and limits |
+| find --term / --path | Exact term or path matching; no question understanding or relevance ranking |
+| file --path | Locate declarations/sections; use `--part` to inspect imports, references, or explanation assignments |
+| read --path | Read a file or anchor directly, with bounded pages returning text and the next range |
+| read --requests - --paged true | Accept a multi-range object from stdin, merge duplicate ranges, then paginate |
+| scenario --id | A scenario's starting point, process, outcome, and associated explanations; `overview` lists only brief entry points |
+| unit --id | A delivered unit, research status, relationships, and evidence |
+| history [--unit ID / --id EVENT_ID] | An organized evolution overview, events for a responsibility, or one event's explanation and historical originals; explicitly fails if no history study exists |
+| coverage | Assignments and explanation gaps in the delivered structure |
+| check | Material identity and record validity; does not check semantic truth |
+| review | Optional hints about record gaps; not a spot check or correctness certification |
+| impact --against | Material changes between versions that might affect explanations |
 
-优先直接读，不先写请求文件。start/end可省略，表示从头或读到文件末尾；工具只返回当前页，next直接给出剩余范围与固定版本；将next作为下一次请求即可，不依赖游标文件。
+Prefer direct reading; do not first write request files. `start/end` may be omitted to mean from the beginning or through the end of the file. The tool returns only the current page; `next` directly supplies the remaining range and fixed version. Use it as the next request without cursor files.
 
 ```sh
 node "$skill_dir/scripts/materials/materials.mjs" read --index "$material_index" --path src/example.py
 ```
 
-直接读取默认返回紧凑正文，--format json返回结构化blocks；预算为200行/12000字符，可用--max-lines/--max-chars调小；上限为400行/16000字符，整个返回包也有24000字符上限。单行本身超过字符上限会明确提示，必要时从原文文件查看，不伪装成完整源码。续读不自动登记已阅读或已解释。宿主工具仍需预留足够输出空间，不在一次外层输出中汇总多个大批次。
+Direct reading returns compact text by default; `--format json` returns structured blocks. The budget is 200 lines / 12,000 characters, adjustable downward with `--max-lines/--max-chars`. Limits are 400 lines / 16,000 characters, with a 24,000-character cap for the complete response package. A single line exceeding the character budget produces an explicit message. Inspect the original file if needed; do not pass incomplete text off as complete source. Continuing a read does not automatically register it as read or explained. The host tool must also allow sufficient output space; do not combine multiple large batches into one outer response.
 
-多范围用--requests - --paged true，从标准输入一次提交`{"ranges":[{"path":"src/example.py","start":10,"end":30}]}`，也可用锚点或证据。分页读取将版本绑定到当前索引，也可显式传revision/modelHash检查期望版本。旧--requests文件入口仍支持，未启用分页时保持完整返回或预算报错的合同。
+For multiple ranges, use `--requests - --paged true` and submit `{"ranges":[{"path":"src/example.py","start":10,"end":30}]}` through stdin; anchors or evidence may also be used. Paginated reading binds the version to the current index. Explicit `revision/modelHash` values may check an expected version. Pass the `next` object back for continuation. The older `--requests` file input remains supported; without pagination, it retains the contract of returning the full request or a budget error.
 
-解析覆盖及延后原因以overview/file结果为准。生成材料仍可读取；需要符号时用build --parse-path指定文件，或--parse-generated true处理全部候选。没有锚点或匹配不表示没有能力，材料引用不等于运行依赖。impact不能判断意义是否改变，也可能漏掉未登记的依赖。
+Use `overview/file` results for parsing coverage and deferral reasons. Generated materials remain readable. If symbols are needed, use `build --parse-path` for specified files or `--parse-generated true` for all candidates. Missing anchors or matches do not imply missing capabilities, and material references are not runtime dependencies. `impact` cannot determine whether meaning changed and may miss unregistered dependencies.
 
-## 写单元与继续研究
+## Write units and continue research
 
-初始化后使用 edit 直接提交语义对象，不先生成请求文件或补丁。输入字段和局部编辑规则只在[输入合同](current-model.md)维护。
+After initialization, submit semantic objects directly with `edit`; do not first generate request files or patches. Input fields and local editing rules are maintained only in the [Input contract](current-model.md).
 
 ```sh
 node "$skill_dir/scripts/materials/study.mjs" init \
-  --index "$material_index" --out "$study_dir" --from - <<'JSON'
-{"intro":{"title":"项目名称","text":"根据已读材料填写的项目介绍。"}}
+  --index "$material_index" --out "$study_dir" --target architecture --from - <<'JSON'
+{"intro":{"title":"Project name","text":"A project introduction based on materials already read."}}
 JSON
 node "$skill_dir/scripts/materials/study.mjs" edit --study "$study_dir" --from - <<'JSON'
-{"unit":{"title":"已发现的职责","summary":"这项职责提供什么。","boundary":"当前确认的边界。"}}
+{"unit":{"title":"An identified responsibility","summary":"What this responsibility provides.","boundary":"Its currently established boundaries."}}
 JSON
 node "$skill_dir/scripts/materials/study.mjs" edit --study "$study_dir" --id "$unit_id" --from -
 ```
 
-edit 接收 unit 元信息、explanations（内联证据及独立 coverage）、relations 和 parent，可以只提交一项或同单元的小批内容。沿用返回的单元、解释或关系 ID 更新局部字段，无须重写整个单元。程序入口 editUnit({study,id?,data}) 接收对象；使用字符串入口时让 JSON.stringify 序列化对象，不手工转义长 JSON。
+`edit` accepts unit metadata, `explanations` (inline evidence and independent coverage), `relations`, and `parent`. Submit one item or a small batch for the same unit. Reuse returned unit, explanation, or relationship IDs to update local fields without rewriting the whole unit. The programmatic entry point `editUnit({study,id?,data})` accepts objects. When using a string interface, serialize with `JSON.stringify`; do not manually escape long JSON.
 
-study unit --id 查看作者包，追加 --explanation 或 --relation 只读取一个条目。错误会指出范围或引用问题；修正对应条目后重新提交即可。--expected unitHash 可防止覆盖并发更新。空单元可先保存，导出不接受缺失解释的单元。
+`study unit --id` retrieves the authoring package. Add `--explanation` or `--relation` to read only one entry. Errors identify range or reference issues; fix the relevant entry and resubmit. `--expected unitHash` can prevent overwriting concurrent updates. Empty units may be saved, but export rejects units lacking explanations.
 
-项目介绍或场景用 project --from 更新。put 仅用于完整作者包导入/替换；init --model 导入已有模型，不补造理解状态。
+Update project introductions or scenarios with `project --from`. `put` is only for importing/replacing complete authoring packages. `init --model` imports an existing model without inventing a state of understanding.
 
-## 先架构、再深入
+## Architecture first, then deeper reading
 
-init用--target architecture或--target complete选择本次交付目标，默认complete；两者都从架构阶段开始。旧研究和导入模型不自动补造阶段完成记录。目标切换保留同一研究中的全部单元和材料关系：
+Explicitly select `init --target architecture` or `--target complete` for the task. The example above selects architectural delivery; use `complete` for complete organization. Omission still defaults to `complete`, which is not evidence of the user's request. Initialization returns the actual target and stage for inspection. Both start in the architecture stage. Old studies and imported models do not receive invented stage-completion records. Switch targets only when the task's scope changes, preserving all units and material relationships in the same study:
 
 ```sh
 node "$skill_dir/scripts/materials/study.mjs" status --study "$study_dir"
 node "$skill_dir/scripts/materials/study.mjs" target --study "$study_dir" --target complete
 ```
 
-status只返回当前进度和分页单元摘要；需要全局解释缺口或悬空关联时调用coverage。程序读取对应页的单元，不为局部查询计算整个项目状态。
+`status` returns only current progress and paginated unit summaries. Call `coverage` for global explanation gaps or dangling relationships. Programmatic reads access the corresponding unit page rather than computing the whole project's state for a local query.
 
-progress --from -直接提交[进度对象](current-model.md)，覆盖当前说明，不保留确认历史。先形成架构、再深入仍是研究顺序；不通过指纹或重复确认来强制执行。标记complete时检查结构合法与零解释归属缺口，不要求先提交架构证明。普通build也可交付阶段成果；覆盖与进度声明分开显示，构建本身不证明研究完成。
+`progress --from -` directly submits a [progress object](current-model.md), replacing the current account without retaining a confirmation history. Architecture before deepening remains the research order; fingerprints or repeated confirmations do not enforce it. Marking `complete` checks structural validity and zero explanation-assignment gaps, without requiring a separate prior architecture certificate. A normal `build` can deliver interim results too. Coverage and progress declarations are displayed separately, and a successful build does not prove research is finished.
 
-## 记录返回范围与复用
+## Record returned ranges and reuse them
 
-初始化后，优先从study入口读取；直接路径、锚点、批量stdin及next范围续读与材料接口相同。每次返回的范围由工具记录，不需要Agent抄写阅读日志。记录失败会明确返回recorded:false及原因，已核验的原文仍可使用。
+After initialization, prefer the `study` reading entry point. Direct paths, anchors, batched stdin, and `next` continuation ranges work as in the materials interface. The tool records ranges returned by each read, so the Agent need not transcribe a reading log. Recording failure explicitly returns `recorded:false` and a reason; verified original text remains usable.
 
 ```sh
 node "$skill_dir/scripts/materials/study.mjs" read --study "$study_dir" --path src/example.py --unit "$unit_id"
 node "$skill_dir/scripts/materials/study.mjs" readings --study "$study_dir" --path src/example.py
 ```
 
-read的--unit是当前或计划研究的单元标识，可省略；--reason可说明读取目的。readings返回工具曾返回的范围、该文件尚未返回的范围、去重与重复行数和阶段统计；不覆盖普通shell、浏览器或其他入口的阅读。下一页将read返回的next对象直接作为request或--requests输入。单元解释与待补读位置继续由Agent维护，工具不把返回日志当作理解证明。程序入口为readForStudy({study,request,unit?,reason?})、studyReadings(study)、studyStatus(study)。
+The optional `--unit` identifies the current or planned research unit; `--reason` may explain the reading purpose. `readings` reports previously returned ranges, ranges not yet returned for the file, unique and repeated line counts, and stage statistics. It does not cover reading through ordinary shell, browser, or other entry points. An empty log does not establish that nothing was read; do not reread mechanically just to fill the log. For the next page, pass the returned `next` object directly as the request or as `--requests` input. The Agent still maintains unit explanations and planned reading locations. Tools do not treat returned-text logs as proof of understanding. Programmatic entry points are `readForStudy({study,request,unit?,reason?})`, `studyReadings(study)`, and `studyStatus(study)`.
 
-## 交付理解图与Agent索引
+## Deliver the understanding graph and Agent index
+
+For final delivery, explicitly pass the task's target. Use `--target complete` for complete organization:
 
 ```sh
-node "$skill_dir/scripts/materials/study.mjs" build --study "$study_dir" --out "$delivery_dir"
+node "$skill_dir/scripts/materials/study.mjs" build --study "$study_dir" --target architecture --out "$delivery_dir"
 ```
 
-产物和计时由终端JSON及build-summary.json统一返回，包括理解图、Agent索引和覆盖清单，无需逐文件拼报告。网页构建成功后，自动收录到当前工作目录的 `how-this-works-site/`，返回 `site.home` 和 `site.project`；可用 `--site "$site_dir"` 指定已有站点。跨工作目录继续整理时必须传同一站点路径，才能更新同一个主页。同一仓库重新构建更新已有入口，原研究与交付目录保留；主页按收录更新时间展示，不把更新时间当作上游提交日期。`--ui false` 只交付数据，不收录网页。已有模型的高级独立构建用materials build，参数见--help。
+With `--target`, `build` checks the recorded target, delivery stage, research note, scenario steps, and existing references before export. `complete` also requires the complete stage and zero explanation-assignment gaps. Failed checks leave an existing delivery unchanged. `deliveryCheck` in the terminal JSON and `build-summary.json` records the structural conditions checked, always with `semanticTruthChecked:false`; it does not certify that all major responsibilities are represented or that explanations are correct. To check the current study without building, use `study.mjs check --study "$study_dir" --target architecture`; the programmatic entry point is `checkStudy({study,target})`.
 
-页头的中文/English按钮只切换固定界面文案，并记住浏览器里的选择；不会翻译研究正文或原文，也不会重新构建研究数据。
+Without `--target`, `build` retains interim preview behavior and normal website registration but produces no `deliveryCheck`. A successful build is not evidence that research is finished. Draft saves, ordinary exports, and progress updates gain no delivery gate. Use [Research judgments](research-contract.md) to decide whether the architecture is actually established before recording its stage; do not change a target or stage merely to pass a check.
 
-网页同时生成“来源与许可”入口：标明独立解读、上游仓库与固定版本，并原样保留材料中标准命名的 LICENSE、NOTICE、COPYRIGHT 等声明文件，网页组件的许可另行列出。这是文件保留与来源展示，不是授权认证；公开展示前仍需核对所使用材料的具体许可证和独立素材权利，不能把仓库公开或根许可证当作全部内容可任意转载的依据。
+Terminal JSON and `build-summary.json` report artifacts and timings together, including the understanding graph, Agent index, and coverage inventory. Do not assemble reports file by file. A successful web build automatically registers the project in `how-this-works-site/` under the current working directory and returns `site.home` and `site.project`. Use `--site "$site_dir"` to select an existing library. When continuing from a different working directory, pass the same site path to update the same homepage. Rebuilding the same repository updates its existing entry; original study and delivery directories remain. The homepage sorts by registration update time; do not confuse that with the upstream commit date. `--ui false` delivers data only and does not register a page. Advanced standalone builds from existing models use `materials build`; see `--help`.
 
-理解图使用 skill 内 `assets/web/` 的固定模板，由 `scripts/build_web.mjs` 构建，无需原开发工作区。仅需要数据时显式--ui false，不能把数据交付称为理解图已生成。单元或项目介绍修改后旧导出不可当作当前结果使用，应重新build；不要手改导出文件或移除版本记录。明确读取归档时使用materials命令的--snapshot true。
+Report research time and tokens only from available measurements. A command's `elapsedMs` is its own duration, not the duration of the entire study. Omit unavailable measurements rather than estimating them as facts. When a research report is needed, record scope, key findings, and boundaries without reproducing the webpage's explanations.
 
-只修改模板、无需更新研究数据时，可运行 `node "$skill_dir/scripts/build_web.mjs" --out "$delivery_dir"`，再用下面的收录命令更新主页。已有学习页也用同一命令收录，可重复 `--add`：
+The Chinese/English button in the header switches only fixed interface text and remembers the browser preference. It does not translate research prose or originals, or rebuild research data.
+
+The webpage also generates a “Sources and licensing” entry: it identifies the work as an independent interpretation, links the upstream repository and fixed version, and preserves standard-named `LICENSE`, `NOTICE`, `COPYRIGHT`, and similar notices verbatim. Web-component licenses are listed separately. This preserves files and displays provenance; it does not certify authorization. Before public display, check the specific licenses of the materials used and rights to independent assets. Do not assume that a public repository or its root license permits arbitrary redistribution of every file.
+
+The understanding graph uses the skill's fixed `assets/web/` template, built by `scripts/build_web.mjs`, without requiring the original development workspace. If only data is needed, explicitly pass `--ui false`; do not describe a data-only delivery as a generated understanding graph. After changing units or the project introduction, the old export is no longer current: rebuild it. Do not edit exports by hand or remove version records. To explicitly read an archive, use the materials commands with `--snapshot true`.
+
+When only the template changes and research data needs no update, run `node "$skill_dir/scripts/build_web.mjs" --out "$delivery_dir"`, then register it again using the command below. Existing learning pages use the same registration command, with repeatable `--add`:
 
 ```sh
 node "$skill_dir/scripts/site.mjs" --site "$site_dir" --add "$delivery_dir"
 python3 -m http.server 8790 --bind 127.0.0.1 --directory "$site_dir"
 ```
 
-在浏览器打开 `http://127.0.0.1:8790/`。站点包含主页和各项目的独立网页、材料与声明，整体复制后可用普通静态服务预览，不依赖每个项目分别启动端口。主页由固定模板生成，Agent不手写项目卡片或链接清单；搜索支持项目名称、用途和场景。收录副本提供返回主页入口，原始交付仍可单独服务。旧模板归档可收录但不自动改写其阅读交互。Agent 默认读取仍保留作者数据的当前性检查，脱离原研究读取归档时使用上述 snapshot 模式。这里只生成静态产物，不部署公网。
+Open `http://127.0.0.1:8790/` in a browser. The site contains the homepage and each project's independent pages, materials, and notices. Copy the whole site and serve it with an ordinary static server; separate project ports are unnecessary. A fixed template generates the homepage. The Agent does not write project cards or link lists by hand. Search supports project names, purposes, and scenarios. Registered copies provide a return-to-home entry, while original deliveries can still be served independently. Old-template archives can be registered without automatically rewriting their reading interactions. Default Agent reads retain freshness checks against authoring data. Use the snapshot mode above to read an archive detached from the original study. This generates static artifacts only; it does not deploy to the public internet.
 
-同一研究目录只允许一个写入操作；提示写锁时先确认没有运行中的写入。更多命令参数见`node "$skill_dir/scripts/materials/study.mjs" --help`，内部存储与锁实现不需要由Agent复写。
+Run writes, `check`, and `build` sequentially for the same study directory. Although `check` does not edit prose, it holds the study lock; do not run it alongside another check or build. If a lock is reported, wait for the current operation to finish rather than removing it merely because you are not writing prose. See `node "$skill_dir/scripts/materials/study.mjs" --help` for more arguments. The Agent need not recreate internal storage or locking logic.

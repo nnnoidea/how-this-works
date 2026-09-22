@@ -1,103 +1,84 @@
-# 项目库、领域研究与周期更新
+# Collections, ecosystem research, and recurring updates
 
-从已有项目库进入领域，再进入方向，最后进入具体项目。例如 Agent → Memory → Mem0：领域层观察不同方向的关注变化；方向层比较项目与方案随时间的变化；项目层追踪内部方案调整。不要用几个项目的共同实现问题代替这一层级，也不把项目名称当成永远固定的技术标签。
+Start from the existing project library, then explore a domain, a direction within it, and an individual project—for example Agent → Memory → Mem0. Observe attention across directions, changes in the solutions within one direction, and design changes inside a project. Do not replace this hierarchy with shared implementation questions from a few handpicked projects.
 
-复用已有架构、解释索引与版本证据。分类和方案归纳由 Agent 完成，不根据目录名、关键词或 Star 数自动推断能力。一个项目可以有多种能力；主分类用于避免同一统计内重复相加，其余标签可保留。代码、Skill、文档项目都可收录。
+Reuse architecture studies, Agent indexes, and versioned evidence. The Agent judges classification, mechanisms and the meaning of changes from actual materials, not from filenames, keywords, or Star counts. Scripts handle identity, deduplication, bounded selection, retained versions, work lists, and rendering. A project can have several capabilities; a primary classification prevents duplicate counts within an aggregate, while other capability tags may coexist.
 
-## 每次收录的边界
+## Choose each collection request
 
-按用户当次选择确定范围、时间窗口、榜单口径与 N，可为总榜，也可分领域分别执行。没有约定时先询问，不默认累计 Star、月度增长或 Top 50。候选必须记录来源、观察时间与排序口径。这里的脚本接收按该口径排序的候选；并未提供一个通吃不同榜单的采集器。用适合所选来源的 API 或已有采集工具取得数据，不让 Agent 猜排名。
+Select the ranking basis, scope, period, and N for the current request; ask before selecting candidates if the basis has not been agreed. Do not assume cumulative stars, monthly growth, or Top 50. Candidates must retain their source, observation time and ordering basis. The script accepts an already ranked candidate list; it is not a universal ranking-data collector. Retrieve candidates through the API or collection tool appropriate to the chosen source, rather than inventing ranks.
 
-周期更新不等于自动调度，也不授权公开发布。未入选当期的老项目仍在库中；入选候选不等于研究完成。研究可以并行，修改同一个 collection 的命令串行执行。
+Recurring updates do not authorize automatic scheduling or publication. Projects remain in the library when they fall outside a later selection. Selection does not mean research is complete. Research may run in parallel, but serialize commands that modify the same collection.
 
-脚本根据身份与版本给出工作类型：
+The plan returns:
 
-| 类型 | Agent 接下来做什么 |
+| Action | Research needed |
 |---|---|
-| `new` | 按单项目流程交付架构理解，再收录；不要求一开始就完整深读或研究全部历史。 |
-| `reuse` | 已核对的上游版本未变，复用研究；保留当期入选和指标记录。 |
-| `update` | 从上次复核版本到新版本看提交和文件差异，再定位受影响的职责、场景、证据和方案分类；补读相关消费者与失败路径。 |
-| `inspect` | 候选没有固定版本，先固定版本再判断，不把未知当作没有变化。 |
+| `new` | Deliver an architecture study using the existing single-project workflow. |
+| `reuse` | The reviewed upstream revision is unchanged; reuse its study and retain this selection's metrics. |
+| `update` | Read changes since the last reviewed revision, locate affected explanations and consumers, then deepen or revise only as needed. |
+| `inspect` | No candidate revision was supplied; pin one before deciding whether anything changed. |
 
-`materials.mjs impact --against` 可帮助定位已有解释受哪些材料变化影响，见[当前命令](material-supply.md)。它不能判断语义是否改变；依赖变化或架构调整可能需要扩大阅读范围。旧 study 固定在原材料版本，不能直接换 revision 或覆盖原材料。需要新版本交付时在新的材料/study 目录继续，复用已有理解并核对引用，不从零机械重读，也不把旧行号当成新证据。
+Use `materials.mjs impact --against` to help locate affected explanations; see [current commands](material-supply.md). This does not judge semantic impact. Changes to dependencies or architecture may require broader reading. Existing studies are bound to their original materials: prepare a new material/study directory for another revision, reuse understanding, and verify references. Never relabel old line numbers as new evidence.
 
-如果差异没有改变已有解释，可以只保存复核结论与差异依据，沿用旧网页。脚本分别记录“解释固定版本”与“差异已复核版本”；不能因为做过差异检查，就把旧解释宣称为新版本完整研究。主要能力、职责关系或分类发生变化时，要更新相应理解并保存新交付。
+If changes do not alter existing explanations, retain the old study and record the review and its evidence. The collection keeps the **study revision** separate from the **reviewed-through revision**. A diff review is not a complete study of the new version. Changes to major capabilities, relationships or classification require corresponding updates.
 
-## 命令与输入
+## Commands and inputs
 
-Python 3.9+，`SCRIPT` 指向 `scripts/collection.py`。支持 `--from -` 直接传 JSON，不要求 Agent 写中间请求文件。研究与 collection 放在 Skill 目录之外。
+Requires Python 3.9+. `SCRIPT` is `scripts/collection.py`. JSON can be passed directly with `--from -`; intermediate request files are unnecessary. Keep collections outside the Skill directory.
 
-| 命令 | 功能 |
+| Command | Purpose |
 |---|---|
-| `init --catalog DIR --from -` | 创建项目库，可登记已有交付和分类；不立即复制整库。 |
-| `plan --catalog DIR --batch ID --period YYYY-MM --top N --from -` | 去重后取前 N 个，保存候选来源与本期工作清单；旧项目需检查或更新时，先保全现有网页版本。 |
-| `status --catalog DIR [--batch ID]` | 返回已有批次及待处理项；用来继续中断工作，不重新创建同名批次。 |
-| `record --catalog DIR --batch ID --from -` | 收录一个已完成交付，或登记已有项目的差异复核；保留旧版本。 |
-| `edit --catalog DIR --from -` | 修改库标题、领域或方向解释；不改写单项目研究。 |
-| `observe --catalog DIR --from -` | 追加有来源的月度指标快照，保留之前的观察；不把未提供值补成零。 |
-| `build --catalog DIR` | 用固定模板生成 `DIR/site/` 的分类、批次、方案与版本页面，不调用模型。 |
+| `init --catalog DIR --from -` | Create a collection and optionally register existing studies without copying the entire library. |
+| `plan --catalog DIR --batch ID --period YYYY-MM --top N --from -` | Deduplicate, select N, retain selection provenance and work items; preserve existing deliveries before inspecting/updating them. |
+| `status --catalog DIR [--batch ID]` | Resume outstanding work rather than recreating a batch. |
+| `record --catalog DIR --batch ID --from -` | Register one completed delivery or an evidence-backed review of an existing project. |
+| `edit --catalog DIR --from -` | Edit the collection title, domains and direction explanations. |
+| `observe --catalog DIR --from -` | Append sourced monthly metric snapshots without replacing earlier observations or treating missing values as zero. |
+| `build --catalog DIR` | Generate the collection website in `DIR/site/` with a fixed template, without model calls. |
 
-批次 ID 是可读的唯一名称，如 `2026-10-memory-growth`。同月可以有不同口径或范围的批次，不覆盖已经保存的选择。候选顺序即排名，重复项不占 N；候选不足 N 时如实返回，不自动编造或换口径补足。
+Use a unique readable batch ID, such as `2026-10-memory-growth`. A month may contain several selections with different scopes or bases. Candidate order is rank order; duplicates do not consume N. A short candidate list remains short rather than silently switching its ranking basis.
 
-初始化对象：
-
-```json
-{
-  "title": "我的项目学习库",
-  "domains": [{"id":"agent","label":"Agent","text":"这个领域的说明"}],
-  "directions": [{"id":"memory","domain":"agent","label":"Memory","text":"方向说明","milestones":[]}],
-  "projects": []
-}
-```
-
-登记已有项目时，`projects` 中每项使用 `repo`、可取得的 GitHub 数字 `repositoryId`、`domain`、`direction`、`delivery`（已有交付绝对目录）、`studyUrl`（当前有效网页地址），可附 `method`、`scope`、`description`、`history`。已有交付目录须含 `index.html` 与 `understanding.json`。第一次更新前会归档原网页；此时之前不要覆盖旧交付目录。网页目录本身应是既有可独立打开的静态交付。
-
-候选对象：
+Initialization:
 
 ```json
-{
-  "basis": "本次实际采用的排序口径与范围",
-  "source": "实际数据来源或查询入口",
-  "observedAt": "2026-10-01T00:00:00Z",
-  "candidates": [
-    {"repo":"owner/project","repositoryId":123,"revision":"已固定的完整提交号","score":100}
-  ]
-}
+{"title":"My project library","domains":[{"id":"agent","label":"Agent"}],"directions":[{"id":"memory","domain":"agent","label":"Memory","text":"Direction explanation","milestones":[]}],"projects":[]}
 ```
 
-尽可能传 GitHub `repositoryId`，以在改名时识别同一个仓库；没有 ID 时只按仓库名识别，不擅自合并。`revision` 缺失会进入 `inspect`。`score` 的含义由 `basis` 解释；累计 Star 与当月 Star 事件不可混用，演示值不能写进实际批次。
+An existing project entry may specify `repo`, numeric GitHub `repositoryId`, `domain`, `direction`, an absolute `delivery` directory, and a working `studyUrl`. Optional interpretation fields are `method`, `scope`, `description`, and `history`. The delivery must contain `index.html` and `understanding.json`. Do not overwrite that delivery before the plan archives it. It must already be an independently readable static study.
 
-完成交付后提交：
+Ranked candidates:
 
 ```json
-{
-  "repo":"owner/project", "repositoryId":123,
-  "revision":"本次候选固定的完整提交号",
-  "delivery":"/absolute/path/to/new-delivery",
-  "domain":"agent", "direction":"memory",
-  "method":"经实际阅读确认的主要办法",
-  "summary":"这次新增了什么理解，或修改了哪些既有解释。"
-}
+{"basis":"The actual ranking basis and scope","source":"Actual source/query","observedAt":"2026-10-01T00:00:00Z","candidates":[{"repo":"owner/project","repositoryId":123,"revision":"pinned-full-commit","score":100}]}
 ```
 
-只复核差异而不替换解释时，省略 `delivery`，并提供 `reviewEvidence`（实际核对过的 diff/提交等引用）和 `summary`。新项目不能使用这一方式跳过架构交付。`history` 可复用单项目导出的 `{events:[...]}`；方向的 `milestones` 接收带 `date/title/text/url/kind` 的有据事件，明确发布说明、提交实现和研究推断的区别。
+Prefer `repositoryId` to recognize renames. Without it, match names only; do not guess that two repositories are the same. Missing `revision` yields `inspect`. The meaning of `score` belongs in `basis`; cumulative stars and monthly star events are different metrics. Example values are not observations.
 
-首次导入可以引用现有学习库地址；后续新收录/更新的网页会由脚本归档到 `site/versions/`，同一版本与解释复用同一份快照。初始化入口的外部网页仍需可访问，只有已归档的交付随新站点自包含。`site/` 以外是研究管理数据，不作为网站发布目录。
-
-本地打开：`python3 -m http.server 8790 --bind 127.0.0.1 --directory COLLECTION/site`。领域用原生折叠导航，展开状态与阅读筛选独立；网页同时保留批次和各版本入口。月度折线图支持切换项目群合计与成员，悬停或键盘聚焦月份时显示月份和准确指标值；热力图保留用于横向比较，缺失观测不连线、不补零。
-
-关注时间轴与入选榜单独立。`observe` 输入示例：
+Completed delivery:
 
 ```json
-{"metric":"monthly-star-events","label":"归档月度 Star 添加事件","period":"2026-09","source":"实际聚合来源","observedAt":"2026-10-01T00:00:00Z","warning":"实际存在的数据边界；没有则省略","values":[{"repo":"owner/project","repositoryId":123,"value":100}]}
+{"repo":"owner/project","repositoryId":123,"revision":"selected-full-commit","delivery":"/absolute/path/to/new-delivery","domain":"agent","direction":"memory","method":"The verified approach","summary":"What changed in this study."}
 ```
 
-同一 metric/period 有多次观察时，网页使用最新 observedAt，旧观察仍保留。不同口径使用不同 metric。某个领域或方向的成员缺少当月观测时，汇总显示缺口，不把只有 Top N 的数据冒充全方向热度。月份不完整、来源覆盖不明或比较项目群改变时，在 warning 中说明。
+For a review that retains existing explanations, omit `delivery` and provide `reviewEvidence` with actual diff/commit references plus `summary`. New projects cannot skip their first delivery. `history` can reuse a single project's exported `{events:[...]}`; direction `milestones` accept `date/title/text/url/kind`, distinguishing release statements from inspected implementation and inference.
 
-## 时间研究不能由榜单自动代替
+Initial imports may link to an existing site. Subsequent new or updated deliveries are retained under `site/versions/`; identical revision/interpretation pairs share a snapshot. Only archived studies are self-contained with the new site; imported external links must remain accessible. Publish only `site/`, not the research-management files beside it.
 
-Top N 用来限制研究工作量，不是整个领域的无偏样本。新一期排名变化、项目改名、分类调整、数据源缺口应分别说明；未入选的项目不是零热度。只有实际取得的可比指标才能形成趋势，不以当前累计 Star 倒推历史，也不把未结束月份与完整月份直接比较。
+Preview with `python3 -m http.server 8790 --bind 127.0.0.1 --directory COLLECTION/site`. Domains have collapsible navigation independent of reading filters; batch and historical study links remain available. The monthly line chart switches between group totals and members; hover or focus a month to see its date and exact metric value. The heatmap remains available for comparison. Missing observations create gaps, never interpolated lines or zero values.
 
-原始观察窗口、数据来源和覆盖诊断随研究保存。不能将“目前是几月”作为更早完整月份下降的充分解释；也不能反过来断言下降一定是采集故障。原因未知时保留未知。
+Attention observations are separate from ranking selections. An `observe` input is:
 
-领域/方向解读需要更新的不只是新增项目：某个老项目改变主办法，也可能改变方案归类。保留当时的研究结论与版本，当前页可修正，过去的历史记录不静默覆盖。各期排名数据与方案变化可以相邻阅读，但同时发生不证明因果或相互借鉴。
+```json
+{"metric":"monthly-star-events","label":"Archived monthly star additions","period":"2026-09","source":"Actual aggregation source","observedAt":"2026-10-01T00:00:00Z","warning":"Actual data limitations; omit if absent","values":[{"repo":"owner/project","repositoryId":123,"value":100}]}
+```
+
+For repeated metric/period observations, the website displays the latest `observedAt` while retaining earlier snapshots. Different measurement bases need different metric IDs. A group with missing member observations shows a gap rather than presenting a Top N subset as the whole group's attention. State partial months, coverage problems or changed cohorts in `warning`.
+
+## Research over time
+
+Top N limits work; it is not an unbiased census. Ranking movement, renames, classification changes and source gaps are separate facts. Absence from a selection does not mean zero attention. Use comparable observations, do not infer past popularity from today's cumulative stars, and distinguish partial months from completed months.
+
+Retain source windows and coverage diagnostics. The current month cannot by itself explain a drop in earlier completed months; neither does a drop prove a collection failure. Keep an unknown cause unknown.
+
+An existing project's design change may alter its solution category. Update current interpretations while retaining previous studies and their versions. Place attention and design changes together when useful, without presenting temporal coincidence as causation or diffusion.

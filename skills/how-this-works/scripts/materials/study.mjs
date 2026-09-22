@@ -6,7 +6,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {performance} from 'node:perf_hooks';
 import {execFileSync} from 'node:child_process';
-import {currentManifest,validateModel,modelHash,verifyOriginals,readPage,readRequestOptions,pageText,build} from './materials.mjs';
+import {currentManifest,validateModel,validateIntroExample,modelHash,verifyOriginals,readPage,readRequestOptions,pageText,build} from './materials.mjs';
 import {coverageReport} from './coverage.mjs';
 import {digest,readJSON,readInput,atomicJSON,sourceHash,studyContentHash,withLock} from './study_store.mjs';
 import {prepareMaterials} from './prepare.mjs';
@@ -21,6 +21,13 @@ const materialIdentity=files=>digest(JSON.stringify([...files.values()].map(f=>[
 const researchState=project=>project.research||{target:'complete',stage:'architecture',summary:'',remaining:[]};
 const targetName=value=>{assert(['architecture','complete'].includes(value),'target must be architecture or complete');return value;};
 const unitNames=dir=>fs.readdirSync(path.join(dir,'units')).filter(f=>f.endsWith('.json')).sort();
+function normalizeScenarios(scenarios){
+ return scenarios.map(s=>{
+  if(!s.steps)return s;
+  const steps=s.steps.map(step=>({...step,nodes:Array.isArray(step.nodes)?[...new Set(step.nodes)]:step.nodes}));
+  return {...s,steps,nodes:[...new Set(steps.flatMap(step=>step.nodes))]};
+ });
+}
 function context(dir,project=readJSON(path.join(dir,'project.json'))){
  const index=path.resolve(dir,project.materialIndex);
  const manifest=currentManifest(index,{snapshot:true});
@@ -61,17 +68,19 @@ export function initStudy({out,index,from,data,model:existing,target='complete'}
  if(existing)validateModel(input,files,manifest.revision);
  assert(existing||!input.research,'use target/progress commands to record research progress');
  const {nodes,edges,evidence,research:discard,...meta}=input;
- if(meta.scenarios)meta.scenarios=meta.scenarios.map(s=>s.steps?{...s,nodes:[...new Set(s.steps.flatMap(step=>step.nodes))]}:s);
+ if(meta.scenarios)meta.scenarios=normalizeScenarios(meta.scenarios);
  assert(meta.intro?.title&&meta.intro?.text,'project introduction required');
+ validateIntroExample(meta.intro);
  assert(!meta.revision||meta.revision===manifest.revision,'project revision differs from materials');
  assert(!meta.repo||meta.repo===manifest.repo,'project repo differs from materials');
  fs.mkdirSync(path.join(out,'units'),{recursive:true});
- atomicJSON(path.join(out,'project.json'),{...meta,research:{target,stage:'architecture',summary:'',remaining:[]},schema_version:existing?(meta.schema_version||2):3,repo:manifest.repo,revision:manifest.revision,materialIndex:path.relative(path.resolve(out),path.resolve(index)),materialIdentity:materialIdentity(files)});
+ const research={target,stage:'architecture',summary:'',remaining:[]};
+ atomicJSON(path.join(out,'project.json'),{...meta,research,schema_version:existing?(meta.schema_version||2):3,repo:manifest.repo,revision:manifest.revision,materialIndex:path.relative(path.resolve(out),path.resolve(index)),materialIdentity:materialIdentity(files)});
  if(existing)for(const n of nodes){
   const relations=edges.filter(e=>e.source===n.id),refs=new Set([...n.sections.flatMap(c=>c.evidence),...(n.study?.reviewedEvidence||[]),...relations.flatMap(e=>e.evidence)]);
   atomicJSON(unitPath(out,n.id),{unit:n,relations,evidence:Object.fromEntries([...refs].map(id=>[id,evidence[id]]))});
  }
- return {study:path.resolve(out),revision:manifest.revision,units:nodes?.length||0,sourceHash:sourceHash(out)};
+ return {study:path.resolve(out),revision:manifest.revision,units:nodes?.length||0,research,sourceHash:sourceHash(out)};
 }
 export function putUnit({study,from,payload,id,expected}){
  assert((from!==undefined)!==(payload!==undefined),'provide exactly one of from or payload');
@@ -151,12 +160,34 @@ export function studyCoverage(dir,{offset=0,limit=30,path:filter,all=false}={}){
  assert(Number.isInteger(offset)&&offset>=0&&Number.isInteger(limit)&&limit>0&&limit<=200,'invalid pagination');
  return {...report,files:rows.slice(offset,offset+limit),total:rows.length,next:offset+limit<rows.length?offset+limit:null,unresolved:unresolved(model)};
 }
-export function exportStudy(dir,out){
+// Delivery checks apply to an explicitly requested target, not to draft saves or previews.
+function validateDelivery(model,files,target){
+ targetName(target);
+ const research=model.research;
+ assert(research?.target===target,`research target mismatch: requested ${target}, study records ${research?.target}; check the requested scope before using target`);
+ assert(['deepening','complete'].includes(research.stage),'architecture is still being established; record deepening only after the overall architecture is understood');
+ assert(typeof research.summary==='string'&&research.summary.trim()&&Array.isArray(research.remaining)&&research.remaining.every(s=>typeof s==='string'&&s.trim()),'delivery needs a research summary and an array of remaining research gaps');
+ assert(model.nodes.length,'delivery needs explained project units');
+ const scenarios=(model.scenarios||[]).filter(s=>s.id!=='all');
+ assert(scenarios.length,'delivery needs an authored scenario with steps; use project to add one');
+ for(const scenario of scenarios)assert(scenario.steps?.length,'delivery scenario needs steps: '+scenario.id);
+ if(target==='complete')assert(research.stage==='complete','complete target requires the complete stage');
+ if(research.stage==='complete')assert(coverageReport(model,files).summary.gapFiles===0,'complete requires zero explanation gaps');
+ return {target,stage:research.stage,scenarios:scenarios.length,semanticTruthChecked:false};
+}
+export function checkStudy({study,target}){
+ return withLock(study,()=>{
+  const {model,files}=aggregate(study);validateModel(model,files,model.revision);
+  return {...validateDelivery(model,files,target),revision:model.revision,modelHash:modelHash(model)};
+ });
+}
+export function exportStudy(dir,out,{target}={}){
  assert(out&&!path.resolve(out).startsWith(path.resolve(dir,'units')+path.sep)&&path.resolve(out)!==path.resolve(dir,'project.json'),'export outside author unit files');
  return withLock(dir,()=>{
   const {model,files,sourceHash:authorHash}=aggregate(dir);validateModel(model,files,model.revision);
+  const deliveryCheck=target===undefined?{}:{deliveryCheck:validateDelivery(model,files,target)};
   atomicJSON(out,model);atomicJSON(out+'.origin.json',{study:path.relative(path.dirname(path.resolve(out)),path.resolve(dir)),sourceHash:authorHash,exportHash:digest(fs.readFileSync(out))});
-  return {model:path.resolve(out),modelHash:modelHash(model),coverage:coverageReport(model,files).summary,research:model.research};
+  return {model:path.resolve(out),modelHash:modelHash(model),coverage:coverageReport(model,files).summary,research:model.research,...deliveryCheck};
  });
 }
 export function updateProject({study,from,data}){
@@ -165,8 +196,9 @@ export function updateProject({study,from,data}){
  return withLock(study,()=>{
   const project=readJSON(path.join(study,'project.json'));
   for(const k of Object.keys(patch))assert(['intro','scenarios','omitted','validationNote','displayName'].includes(k),'project field cannot be changed: '+k);
-  if(patch.scenarios)patch.scenarios=patch.scenarios.map(s=>s.steps?{...s,nodes:[...new Set(s.steps.flatMap(step=>step.nodes))]}:s);
+  if(patch.scenarios)patch.scenarios=normalizeScenarios(patch.scenarios);
   const next={...project,...patch};assert(next.intro?.title&&next.intro?.text,'project introduction required');
+  validateIntroExample(next.intro);
   atomicJSON(path.join(study,'project.json'),next);return {saved:true,repo:next.repo,revision:next.revision};
  });
 }
@@ -234,12 +266,13 @@ async function main(){
    target:'--study study --target architecture|complete; keeps units, evidence and reading history',
    status:'--study study [--offset 0 --limit 20]',
    progress:'--study study --from -|JSON|file; input: {stage:architecture|deepening|complete,summary,remaining:[string]}',
+   check:'--study study --target architecture|complete; delivery structure only, not semantic correctness',
    read:'--study study (--path path [--start N --end N --anchor id] | --requests -|JSON|file) [--unit id --reason text --max-lines 200 --max-chars 12000 --format text|json --snapshot true]',
    readings:'--study study [--path substring --offset 0 --limit 30]; returned ranges, never an understanding score',
    project:'--study study [--from -|inline-JSON|metadata-patch.json]',put:'--study study --from -|inline-JSON|unit.json [--id stable-id] [--expected unitHash]',
    history:'--study study --collection history-collection --from -|JSON|events.json; validates historical references and imports their excerpts',
    unit:'--study study --id unit-id [--explanation claim-id | --relation relation-id]',coverage:'--study study [--path substring] [--offset 0] [--limit 30] [--all true]',
-   export:'--study study --out model.json',build:'--study study --out delivery [--site how-this-works-site] [--repo bare.git] [--atlas data.json] [--ui false]'},
+   export:'--study study --out model.json',build:'--study study --out delivery [--target architecture|complete (check delivery; omit for preview)] [--site how-this-works-site] [--repo bare.git] [--atlas data.json] [--ui false]'},
    input:'Use --from - with JSON on stdin to save directly, without a request file or patch. Module API accepts initStudy({data}), editUnit({data,id?}), updateProject({data}). putUnit is the full-packet import/replacement API.',
    contracts:'references/current-model.md',result:'JSON; build also writes build-summary.json, prepare writes preparation.json. No repository code or semantic model is executed.'},null,2));return;
  }
@@ -251,6 +284,7 @@ async function main(){
  else if(cmd==='edit')result=editUnit(o);
  else if(cmd==='target')result=setTarget(o);
  else if(cmd==='progress')result=updateProgress(o);
+ else if(cmd==='check')result=checkStudy(o);
  else if(cmd==='history')result=importHistory(o);
  else if(cmd==='status')result=studyStatus(o.study,{offset:Number(o.offset||0),limit:Number(o.limit||20)});
  else if(cmd==='readings')result=studyReadings(o.study,{path:o.path,offset:Number(o.offset||0),limit:Number(o.limit||30)});
@@ -267,8 +301,8 @@ async function main(){
  else if(cmd==='coverage')result=studyCoverage(o.study,{offset:Number(o.offset||0),limit:Number(o.limit||30),path:o.path,all:o.all==='true'});
  else if(cmd==='export')result=exportStudy(o.study,o.out);
  else if(cmd==='build'){
-  assert(o.out,'build needs output directory');fs.mkdirSync(o.out,{recursive:true});
-  const exported=exportStudy(o.study,path.join(o.out,'author-model.json')),{index}=context(o.study);
+  assert(o.out,'build needs output directory');
+  const exported=exportStudy(o.study,path.join(o.out,'author-model.json'),{target:o.target}),{index}=context(o.study);
   const binding=readJSON(path.join(index,'source.json')),atlas=o.atlas||(binding.atlas&&path.resolve(index,binding.atlas));
   assert(atlas,'build needs --atlas for older material indices');
   const built=await build({atlas,model:exported.model,out:path.join(o.out,'agent'),web:o.out,repo:o.repo});

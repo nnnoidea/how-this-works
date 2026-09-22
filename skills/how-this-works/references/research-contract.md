@@ -1,33 +1,39 @@
-# 研究判断与边界
+# Research judgments and boundaries
 
-确定性表示固定输入和规则可重放，不表示结论必然为真。材料采集与检查交给命令；以下保留Agent需要作出的判断。
+Determinism means fixed inputs and rules can be replayed; it does not mean conclusions are necessarily true. Delegate material collection and checks to commands. The judgments below remain the Agent's responsibility.
 
-## 理解一个项目
+## Understanding a project
 
-从实际用途、入口和材料提出职责及关联。目录或符号列表不足以解释结构，统一的比较维度不能迫使项目具有不存在的组件。
+Use the README, main usage examples, quickstart, and the materials they point to to identify what the project wants users to understand: recurring problems, representative tasks, outputs, and distinguishing choices. Treat these as revisable leads, locate the materials that deliver that value, and trace a representative task to verify its key choices and limits. If the README is missing, outdated, or contradicted by implementation, revise the account using available entry points, examples, and actual materials, explaining the discrepancy. Lengthy installation instructions do not make installation the core, and a file named SKILL.md is not automatically the focus. A Skill, core code, protocol, or documentation may carry the main value, depending on this project’s evidence.
 
-围绕具体输入解释关键数据如何传递和变化、哪些条件决定分支、何时结束或失败，以及相关消费者会受到什么影响。动态分派、外部实现或恢复路径尚未读到时保留断点；同名CLI、服务和其他出口分别核对，不能从一个出口外推全部行为。
+The core explanation should connect the user’s problem, the project’s approach, and its result before explaining why supporting mechanisms are needed. Derive responsibilities and relationships from this verified account and the other major capabilities. Directory or symbol lists do not explain the structure, and shared comparison dimensions must not force a project to have components that do not exist.
 
-优先补读可能改变核心解释的疑问，例如限制是否真的强制执行、失败后是否重复产生副作用。单元随证据拆分、合并或修正，不预设数量。已读、已归属和已解释是不同状态；未理解部分仍为缺口，局部深读不能代表整个项目。
+Use concrete inputs to explain how key data moves and changes, which conditions determine branches, when processing ends or fails, and how relevant consumers are affected. When connecting scenario steps, check each next step's preconditions against the state actually produced by the preceding step: for example, whether a file created during initialization makes a later command refuse to overwrite it. Operations that work individually may not work in the sequence described. Preserve gaps where dynamic dispatch, external implementations, or recovery paths have not been read. Check identically named CLIs, services, and other entry points separately; do not generalize all behavior from one entry point.
 
-## 证据性质
+Prioritize questions that could change the core explanation, such as whether a limit is actually enforced or whether retrying after failure repeats side effects. Split, merge, or revise units as evidence develops, without prescribing their number. Read, assigned, and explained are distinct states. Ununderstood material remains a gap; deep reading of one area does not represent the whole project.
 
-- fact：原始材料能直接证明的具体事实。可以说“目录声明默认关闭”，不能因此说“所有执行入口都强制关闭”。源码中的说明字符串仍是声明依据。
-- author：作者明示的目标、理由和实验报告，保留原始时点；不转写成本轮实测。
-- inference：由已取得证据推导的机制意义、取舍或关联，说明推导缺口。
-- 阅读测试仅证明断言存在。实际运行需保存输入、固定版本、环境、结果及未验证范围；是否需要运行由具体疑问和授权决定。
-- 负面结论限定到已检查范围。没有匹配不证明仓库没有某种能力。
+Architectural delivery depends on evidence for the main responsibilities and their key collaboration. Compare the project’s main advertised or discovered capabilities with the account actually written: each needs a supported explanation and a reachable entry, or an explicit unresolved gap. Do not count a name in the introduction or a disclaimer as explaining a capability. Examine different entry points, code, Skills, documentation, and configuration rather than treating the first traced path as the whole project. This does not require another inventory or a minimum amount of reading. If unread material could overturn a core explanation, read the necessary available implementation or narrow the conclusion. Keep establishing the architecture while major responsibilities or relationships remain unsupported; secondary mechanisms and external implementations may retain explicit boundaries. For a topical study, limit the introduction, summary, and progress note to that slice without claiming that the whole project's architecture has been established.
 
-每条依据要支持具体陈述；摘要需保留会改变结论的例外。理由未知时保留未知，不把兼容负担、偶然结果或现有代码全部合理化为作者有意设计。正文组织见[阅读标准](reader-friendly.md)。初版不增加抽查流程。
+## Nature of evidence
 
-## 历史与跨项目研究（仅按需）
+- `fact`: a specific fact directly supported by original materials. You may say “the registry declares this disabled by default,” but not infer that “every execution entry point enforces this.” Comments, logs, and explanatory strings establish what the code says, but cannot independently establish that their descriptions match actual behavior.
+- `author`: the author's explicit goals, reasons, and experiment reports. Preserve their original point in time; do not present them as experiments performed in this study.
+- `inference`: implications, tradeoffs, or relationships inferred from acquired evidence. State the gaps in the reasoning.
+- Reading a test only proves that an assertion exists. For actual execution, retain inputs, fixed version, environment, results, and unverified scope. The specific question and authorization determine whether execution is needed.
+- Limit negative conclusions to the inspected scope. A lack of matches does not prove that the repository lacks a capability.
 
-选择会改变能力、约束或设计的事件，围绕行为变化聚合提交；规模、标题相似或发生时间邻近不能代替语义判断。政策和维护文档也可能改变边界。回滚与重新引入分开记录，已删除职责保留退出状态及可能的接替关系。
+Judge evidence by the claim, not the file extension. Skill text can define a workflow, but “requires a check first” does not mean “the program blocks unchecked operations”; the latter needs evidence from actual execution or control branches. For code repositories, directories, imports, type signatures, help text, and READMEs can guide navigation but cannot independently establish execution mechanisms.
 
-解释旧问题、当时方案为何合理、后续限制、新机制和代价。补读实际可取得的完整提交说明及PR/issue讨论；链接只表示线索，不能冒充读过正文。后续纠正与被替代设计应保留修正链。
+Each piece of evidence must support a specific statement. Summaries must preserve exceptions that change the conclusion. Leave unknown reasons unknown; do not rationalize compatibility burdens, accidental outcomes, or every existing implementation as intentional design. See [Reading standards](reader-friendly.md) for organizing the prose. Do not add a spot-check process to the initial version.
 
-比较项目时先明确状态对象、生命周期与失败模型；相同术语不保证机制可比。先后出现不证明传播，少量样本不代表行业关注变化。
+## History and cross-project research (only as needed)
 
-脚本提供的是第一父链和提交者时间的近似集成视角。它不能证明历史公开时间、实际合入时间、release发布时间或采用情况。提交者可改写日期；移出时间窗口不是回滚，窗口内首次出现也不等于历史首次。日期异常及采集范围以输出记录为准。
+Select events that change capabilities, constraints, or design. Group commits around behavioral changes; size, similar titles, or nearby dates cannot substitute for semantic judgment. Policy and maintenance documents may also change boundaries. Record reversals and reintroductions separately. Preserve the exit status of deleted responsibilities and possible successor relationships.
 
-热点预测需有截止日、观察指标、反证条件和后续结果。当前未提供自动预测追踪或回测；证据不足时允许不预测，不能把事后叙事当成事前判断。
+Explain the old problem, why the solution made sense at the time, later limitations, the new mechanism, and its costs. Read the full commit messages and PR/issue discussions that are actually available. A link is only a lead, not proof that its contents were read. Preserve chains of corrections and superseded designs.
+
+Before comparing projects, establish their state objects, lifecycles, and failure models. Identical terminology does not guarantee comparable mechanisms. Temporal sequence does not prove transmission, and a small sample does not represent changes in industry attention.
+
+Scripts provide an approximate integration view based on the first-parent chain and committer timestamps. They cannot establish historical public availability, actual merge times, release dates, or adoption. Committers can rewrite timestamps. Leaving a time window is not a rollback, and the first appearance within a window is not necessarily the first in history. Use the output records for date anomalies and collection scope.
+
+Trend predictions need a cutoff date, observable indicators, falsification conditions, and subsequent outcomes. Automated prediction tracking and backtesting are not currently provided. Abstain when evidence is insufficient; do not present hindsight narratives as prior predictions.

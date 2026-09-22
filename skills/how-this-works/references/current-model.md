@@ -1,67 +1,71 @@
-# 研究输入合同
+# Research input contract
 
-新研究使用 v3。命令见[当前命令](material-supply.md)。Agent提供解释与判断，脚本维护存储标识、关联和导出结构。
+Use v3 for new studies. See [Current commands](material-supply.md). The Agent supplies explanations and judgments; scripts maintain storage identifiers, associations, and export structures.
 
-## 项目与进度
+## Project and progress
 
-init 输入包含 intro.title/text；可附 intro.example（注明示意或实测）、intro.map、displayName、omitted、validationNote，以及 scenarios（场景过程，见下文）。repo 与 revision 来自材料索引。
+The `init` input includes `intro.title/text`. It may also include `intro.example` (a string identifying the example as illustrative or actually tested; not a `{kind,text}` object), `intro.map`, `displayName`, `omitted`, `validationNote`, and `scenarios` (scenario processes, below). `repo` and `revision` come from the material index. Use `intro.text` for the reader's problem, the project's approach, and the result. Put internal implementation details in responsibility explanations and research scope or unexplored areas in `progress.summary/remaining`, rather than crowding the landing-page introduction. If the study covers only a slice, the introduction must still limit its scope explicitly rather than imply whole-project understanding.
 
-progress 输入为 `{"stage":"deepening","summary":"整体理解","remaining":["尚未深入的范围"]}`。stage 为 architecture/deepening/complete。summary 和 remaining 只写理解与研究缺口；单元/解释/关系数量和构建结果由脚本及页面生成，不在正文重复填写构建待办。研究目标由 target 维护。完整整理要求零解释归属缺口，进度声明不证明语义正确。
+The `progress` input is `{"stage":"deepening","summary":"Overall understanding","remaining":["Areas not yet explored deeply"]}`. `stage` is `architecture`, `deepening`, or `complete`. Use `summary` and `remaining` only for understanding and research gaps. Scripts and pages generate counts of units, explanations, and relationships and report build results; do not repeat build tasks in the prose. `target` maintains the research goal. Complete organization requires zero explanation-assignment gaps; declaring progress does not prove semantic correctness.
 
-## 场景过程
+`target` says what this delivery aims to achieve; `stage` says what has actually been achieved. Stage `architecture` means the overall architecture is still being established; `deepening` means the main responsibilities and key collaboration have been established and details can be explored further; `complete` means all materials have explanation assignments. `target=complete` is not a completion declaration. A local study without an overall project account remains at `architecture`; do not add a separate slice mode. State its actual scope in the introduction and research note. Checks cannot decide whether the overall architecture is established.
 
-用 project 提交 scenarios；每个场景含 id、label、description、start（起点）、outcome（结果与边界）、steps。步骤是按实际过程编写的可读解释，含 title、text、nodes（承担这一步的单元 ID）与 claims（这些单元中支撑解释的段落 ID）。脚本从步骤生成场景的参与单元集合，不手工重复维护。引用错误会在导出时指出场景与步骤。
+## Scenario processes
+
+Submit `scenarios` through `project`. Each scenario has `id`, `label`, `description`, `start` (starting point), `outcome` (result and boundaries), and `steps`. Steps are readable explanations of the actual process, with `title`, `text`, `nodes` (IDs of units responsible for this step), and `claims` (IDs of explanatory passages in those units that support the explanation). Scripts deduplicate responsibility IDs within each step and derive the set of participating units from the steps; do not maintain it again manually. Export errors identify the scenario and step with an invalid reference.
 
 ```json
-{"scenarios":[{"id":"one-task","label":"完成一件具体工作","description":"这个场景解决什么问题。",
- "start":"读者面对什么情况。","outcome":"得到什么，以及可能停在哪里。",
- "steps":[{"title":"第一步发生什么","text":"解释条件、行为、分工与例外。",
- "nodes":["已有单元ID"],"claims":["该单元已有的解释ID"]}]}]}
+{"scenarios":[{"id":"one-task","label":"Complete a concrete task","description":"The problem this scenario solves.",
+ "start":"The situation the reader faces.","outcome":"What is obtained and where progress may stop.",
+ "steps":[{"title":"What happens first","text":"Explain conditions, behavior, division of work, and exceptions.",
+ "nodes":["existing-unit-ID"],"claims":["existing-explanation-ID-in-that-unit"]}]}]}
 ```
 
-从已有解释与源码复用证据；如果缺少依据，先补读并写入对应单元。步骤顺序、条件和分支来自材料判断，不按节点位置或引用关系推定。不要把全项目的共同根节点当成场景的全部参与者。没有步骤的旧场景仍可查看关联职责，但页面明确标示尚未整理过程，不伪造流程。
+Reuse evidence from existing explanations and source material. When support is missing, read more and add it to the relevant unit first. Judge step order, conditions, and branches from materials, not node positions or reference relationships. Do not treat a shared project root as the sole participant in a scenario. Old scenarios without steps can still show associated responsibilities, but the page explicitly states that the process has not been organized; it does not fabricate a workflow.
 
-理解图提供项目、场景、步骤和职责入口；场景与步骤复用同一职责，不改变单元父子关系。Agent先从overview选择场景，再用scenario --id读过程、unit --id读需要的职责。无需一次读取全部场景正文。
+The understanding graph offers project, scenario, step, and responsibility entry points. Scenarios and steps reuse the same responsibilities without changing unit parent-child relationships. The Agent selects a scenario from `overview`, reads its process with `scenario --id`, and accesses relevant responsibilities with `unit --id`. There is no need to read all scenario prose at once.
 
-## 小范围写入：edit
+## Local writes: edit
 
-首次省略 --id，提交 unit 的 title、summary、boundary 建立单元；以后沿用返回的单元 id。一个请求可以提交同一单元的数条解释和关系。只写需要改变的字段，省略的内容保留；空单元可暂存，但不能作为已完成研究导出。
+On the first call, omit `--id` and submit the unit's `title`, `summary`, and `boundary` to create it. Reuse the returned unit ID thereafter. A request may submit several explanations and relationships for the same unit. Write only fields that need changing; omitted content is preserved. Empty units may be saved temporarily but cannot be exported as completed research.
 
 ```json
 {
-  "unit":{"title":"返回执行结果","summary":"根据实际材料填写。","boundary":"本单元解释的范围。"},
+  "unit":{"title":"Return execution results","summary":"Based on actual materials.","boundary":"The scope this unit explains."},
   "explanations":[{
-    "title":"失败时保留什么","text":"连贯解释条件、行为与边界。","level":"fact",
+    "title":"What is retained on failure","text":"Explain conditions, behavior, and boundaries coherently.","level":"fact",
     "evidence":[{"path":"src/example.py","start":10,"end":15,
-      "role":"implementation","note":"这个分支保留失败信息。","reviewed":true}],
+      "role":"implementation","note":"This branch retains failure information.","reviewed":true}],
     "coverage":[{"path":"src/example.py","start":8,"end":18,
-      "status":"explained","note":"解释这一分支的入口与结果。"}]
+      "status":"explained","note":"Explains this branch's entry and result."}]
   }]
 }
 ```
 
-工具返回 changed.explanations / changed.relations 中的 id。更新解释时，传该 id 及修改的字段，例如 `{"explanations":[{"id":"工具返回的ID","text":"修订后的正文"}]}`。修改 coverage 不需要重发正文或证据；修改 evidence 不需要重发覆盖范围。显式 evidence/coverage 数组替换该解释的对应集合，coverage:[] 清除该解释的覆盖。`{"id":"...","remove":true}` 删除一条解释或关系；删除解释同时移除它的覆盖关联，不删除其他解释。
+The tool returns IDs in `changed.explanations` / `changed.relations`. To update an explanation, pass its ID and changed fields, for example `{"explanations":[{"id":"ID-returned-by-the-tool","text":"Revised prose"}]}`. Updating `coverage` does not require resending prose or evidence; updating `evidence` does not require resending coverage. Explicit `evidence`/`coverage` arrays replace the corresponding collection for that explanation; `coverage:[]` clears its coverage. `{"id":"...","remove":true}` deletes one explanation or relationship. Deleting an explanation also removes its coverage associations, without deleting other explanations.
 
-level 取 fact/author/inference。evidence 直接附在解释中，每项为固定版本的 path 和一基 start/end，或工具返回的 anchor；kind、label 可省略。role 取 declaration/implementation/test/observation，note 说明具体支持什么；不能根据文件后缀推定角色。reviewed:true 仅表示研究者确已核对该证据，不表示运行验证或完整理解。
+`level` is `fact`, `author`, or `inference`. Attach `evidence` directly to explanations. Each item identifies a fixed-version `path` and one-based `start/end`, or an `anchor` returned by the tool. `kind` and `label` are optional. `role` is `declaration`, `implementation`, `test`, or `observation`; `note` explains exactly what it supports. Do not infer the role from a file extension. `reviewed:true` means only that the researcher actually checked this evidence, not that execution was verified or understanding is complete.
 
-coverage 与 evidence 独立。每项 path、start/end、status、note；status 为 pending/explained。空文件或不可读材料使用 wholeFile:true，省略行号。允许同一范围归属多个解释或单元。证据引用不会自动产生解释覆盖，生成材料也不从缺口中消失。
+`coverage` is independent of `evidence`. Each item has `path`, `start/end`, `status`, and `note`; `status` is `pending` or `explained`. For empty files or unreadable materials, use `wholeFile:true` and omit line numbers. Multiple explanations or units may own the same range. Evidence references do not automatically create explanation coverage, and generated materials do not disappear from the gaps.
 
-unit.study 可局部更新 depth、scope、openQuestions、nextReads。depth 取 located/explained/traced；scope 限定实际理解范围，openQuestions 每项 question/impact，nextReads 每项 path/reason，可附 start/end。首次默认 located，scope 默认单元 boundary；提升深度需有明确核对过的证据。核对记录由 evidence.reviewed 写入，不手工维护证据 ID。
+`unit.study` supports partial updates to `depth`, `scope`, `openQuestions`, and `nextReads`. `depth` is `located`, `explained`, or `traced`. `scope` bounds actual understanding. Each `openQuestions` item has `question/impact`; each `nextReads` item has `path/reason` and optional `start/end`. Initially, `depth` defaults to `located` and `scope` to the unit's `boundary`. Increasing depth requires explicitly checked evidence. Record checks with `evidence.reviewed`; do not maintain evidence IDs manually.
 
-## 关系与组成
+## Relationships and composition
 
 ```json
-{"relations":[{"target":"另一单元ID","kind":"cooperation",
- "label":"提交执行结果","text":"说明两者如何协作以及成立条件。",
+{"relations":[{"target":"another-unit-ID","kind":"cooperation",
+ "label":"Submit execution results","text":"Explain how the two collaborate and under what conditions.",
  "evidence":[{"path":"src/example.py","start":20,"end":25}]}]}
 ```
 
-relations 的 kind 为 cooperation/feedback。传返回的关系 id 可只修改 text、label、target 或 evidence。省略保留，删除需明确 remove:true。
+A relation starts at the unit being edited (`--id`); `target` names the receiving unit. Write A → B by editing A. To change the source, remove the old relation and add it under the actual source with its supporting evidence. Do not collect every relationship under one unit. Valid endpoint IDs alone do not establish correct collaboration semantics.
 
-组成使用子单元上的 parent：`{"parent":{"id":"父单元ID","text":"为何属于这个职责","evidence":[{"path":"src/example.py","start":1,"end":5}]}}`。脚本生成组成关系，不再同时维护反向边。parent:null 移除父归属。层级由研究发现，不按目录预填；未建立的目标单元可暂存，最终导出会检查完整性。
+The `kind` of a relationship is `cooperation` or `feedback`. Pass its returned ID to update only `text`, `label`, `target`, or `evidence`. Omission preserves content; deletion requires explicit `remove:true`.
 
-## 已有数据
+For composition, set `parent` on the child unit: `{"parent":{"id":"parent-unit-ID","text":"Why this belongs to that responsibility","evidence":[{"path":"src/example.py","start":1,"end":5}]}}`. Scripts generate composition relationships; do not also maintain a reverse edge. `parent:null` removes parent membership. Discover the hierarchy through research rather than prefilling it from directories. References to units not yet created may be saved temporarily; final export checks integrity.
 
-study unit 返回保存的作者包；--explanation 或 --relation 可只读取一个条目及其内联证据，便于局部修订。--expected unitHash 可检查并发变化。
+## Existing data
 
-put / putUnit 保留为已有作者包的完整导入和替换入口，接收 unit、evidence 及可选 relations、parentEvidence、parentNote。它不是日常编辑入口；使用已保存的包，不手工重建全局 ID 映射。init --model 可导入现有模型；旧 v2 未记录的阅读状态不补造。历史 concepts/questions/events 不自动转换为当前解释。
+`study unit` returns the saved authoring package. Use `--explanation` or `--relation` to read only one entry with its inline evidence for local revisions. `--expected unitHash` can check for concurrent changes.
+
+`put` / `putUnit` remain available for full import or replacement of existing authoring packages, accepting `unit`, `evidence`, and optional `relations`, `parentEvidence`, and `parentNote`. They are not the everyday editing entry point. Use saved packages rather than manually rebuilding global ID mappings. `init --model` imports an existing model; do not invent reading states missing from old v2 data. Historical `concepts/questions/events` are not automatically converted into current explanations.
